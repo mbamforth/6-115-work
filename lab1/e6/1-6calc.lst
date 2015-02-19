@@ -1,0 +1,191 @@
+0000:                       .org 00h                                ; power up 
+0000: 02 01 00              ljmp start                      ; when the micro wa
+                                                                    ; the main 
+0100:              .org 100h                                ; and located at ad
+                   start: 
+0100: 12 01 24              lcall init                      ; Start the serial 
+                            loop:                           ; Now, endlessly re
+0103: 12 01 85                      lcall getnum    ; Get the first number
+0106: C0 E0                         push acc
+0108: 88 E0                         mov acc, R0             ; Put the first num
+010A: A9 E0                         mov R1, acc             ; Put the first num
+010C: D0 E0                         pop acc
+010E: 12 01 85                      lcall getnum    ; Get the second number
+0111: C0 E0                         push acc
+0113: 88 E0                         mov acc, R0             ; Put the second nu
+0115: AA E0                         mov R2, acc             ; Put the second nu
+0117: D0 E0                         pop acc
+0119: 12 01 D9                      lcall getsymbol         ; Get the + or -
+011C: 12 01 48                      lcall crlf              ; Call carriage ret
+011F: 12 01 48                      lcall crlf              ; Call carriage ret
+0122: 80 DF                 sjmp loop
+                            
+                   init:
+                   ; set up serial port with a 11.0592 MHz crystal,
+                   ; use timer 1 for 9600 baud serial communications        
+0124: 75 89 20              mov tmod, #20h          ; set timer 1 for auto relo
+0127: 75 88 40              mov tcon, #40h          ; run timer 1
+012A: 75 8D FD              mov th1,  #0FDh                 ; set 9600 baud wit
+012D: 75 98 50              mov scon, #50h          ; set serial control reg fo
+                                                                    ; and mode 
+0130: D2 B4                 setb P3.4                       ; sets output enabl
+0132: 75 90 00              mov P1, #00h            ; Clear the LED bank
+0135: 22                    ret
+                            
+                   getchr:
+                   ; This routine "gets" or receives a character from the PC, t
+                   ; the serial port. RI is the same as SCON.0 - the assembler 
+                   ; either shorthand. The 7-bit ASCII code is returned in the 
+                   
+0136: 30 98 FD              jnb ri, getchr          ; wait till character recei
+0139: E5 99                 mov a, sbuf                     ; get character and
+013B: 54 7F                 anl a, #7fh                     ; mask off 8th bit
+013D: C2 98                 clr ri
+013F: 22                    ret
+                            
+                   sndchr:
+                   ; This routine "sends" or transmits a character to the PC, u
+                   ; port. The character to be sent is stored in the accumulato
+                   ; TI are the same as far as the assembler is concerned.
+                   
+0140: C2 99                 clr scon.1                      ; clear the ti comp
+0142: F5 99                 mov sbuf, a                     ; move a character 
+                   txloop:
+0144: 30 99 FD              jnb scon.1, txloop      ; wait till chr is sent
+0147: 22                    ret
+                            
+                   crlf:
+                   ; This routine sends a linefeed and a carriage return when c
+                   
+0148: C0 E0                 push acc                        ; push the old accu
+014A: 74 0A                 mov a, #0Ah                     ; Move linefeed cha
+014C: 12 01 40              lcall sndchr            ; Send linefeed character
+014F: 74 0D                 mov a, #0Dh                     ; Move carriage ret
+0151: 12 01 40              lcall sndchr            ; Send carriage return char
+0154: D0 E0                 pop acc                                 ; pop the o
+0156: 22                    ret
+                   
+                   getnibble:
+                   ; This function gets a nibble from the keypad
+                   
+0157: C0 E0                 push acc                        ; push the old accu
+0159: 75 90 FF              mov P1, #0FFh           ; puts P1 in read mode
+015C: C2 B4                 clr P3.4                        ; lower output enab
+                            checkdata:
+015E: 85 90 E0                      mov acc, P1             ; move in values
+0161: 53 E0 80                      anl acc, #80h   ; mask all but data availab
+0164: B4 80 F7                      cjne a, #80h, checkdata         ; loop if d
+0167: 85 90 E0              mov acc, P1                     ; since data is ava
+016A: D2 B4                 setb P3.4                       ; sets output enabl
+016C: 53 E0 0F              anl acc, #0Fh           ; mask all but the 4 data b
+016F: 12 01 C6              lcall keytab            ; uses the table to convert
+0172: F8                    mov R0, a                       ; return the value 
+0173: 88 90                 mov P1, R0
+0175: 24 30                 add a, #30h                     ; add value to the 
+0177: 12 01 40              lcall sndchr            ; Send carriage return char
+                            
+017A: 7D 00                 mov R5, #00h
+017C: 7C 00                 mov R4, #00h
+                            loopa:                          ; loop to deal with
+017E: DD FE                         djnz R5, loopa
+0180: DC FC                         djnz R4, loopa  
+                            
+0182: D0 E0                 pop acc                                 ; pop the o
+0184: 22                    ret
+                   
+                   getnum:
+                   ; This routine gets the three characters from the keypad
+                   
+0185: C0 E0                 push acc                ; push the accumulator to s
+                            
+0187: 12 01 57              lcall getnibble         ; get the first nibble and 
+018A: 88 E0                 mov acc, R0             ; puts the numerical result
+018C: 75 F0 64              mov b, #64h             ; Puts decimal 100 in regis
+018F: A4                    mul ab                  ; Multiplies the first nume
+0190: FB                    mov R3, a               ; Moves the lowest byte res
+                            
+0191: 12 01 57              lcall getnibble         ; get the second nibble and
+0194: 88 E0                 mov acc, R0             ; puts the numerical result
+0196: 75 F0 0A              mov b, #0Ah             ; Puts decimal 10 in regist
+0199: A4                    mul ab                  ; Multiplies the first nume
+019A: 2B                    add a, R3               ; Adds this numeral with th
+019B: FB                    mov R3, a               ; Moves the lowest byte res
+                            
+019C: 12 01 57              lcall getnibble         ; get the second nibble and
+019F: 88 E0                 mov acc, R0
+01A1: 2B                    add a, R3               ; Adds this numeral with th
+01A2: A8 E0                 mov R0, acc             ; Moves the result into R0
+01A4: 12 01 48              lcall crlf              ; Call carriage return/line
+                            
+                            ;mov P1, R0             ; pushes to LED bank for de
+                            
+01A7: D0 E0                 pop acc                         ; pop the old accum
+01A9: 22                    ret     
+                            
+                   dispnum:
+                   ; This routine displays the result of the calculation on the
+01AA: 75 F0 64              mov b, #64h                             ; put 100 i
+01AD: 84                    div ab                                  ; the resul
+01AE: 24 30                 add a, #30h                             ; mask the 
+01B0: 12 01 40              lcall sndchr                    ; send the first nu
+01B3: E5 F0                 mov a, b                                ; move the 
+01B5: 75 F0 0A              mov b, #0Ah                             ; move 10 i
+01B8: 84                    div ab
+01B9: 24 30                 add a, #30h                             ; mask the 
+01BB: 12 01 40              lcall sndchr                    ; send the second n
+01BE: E5 F0                 mov a, b                                ; move the 
+01C0: 24 30                 add a, #30h                             ; mask the 
+01C2: 12 01 40              lcall sndchr                    ; send the third nu
+01C5: 22                    ret
+                   
+                   keytab:
+                   ; This subroutine takes the nibble from the keypad and conve
+                   
+01C6: 04                    inc a
+01C7: 83                    movc a, @a+pc
+01C8: 22                    ret
+01C9: 01 02 03 0A 
+      04 05 06 0B 
+      07 08 09 0C 
+      0E 00 0F 0D 
+                            .db 01h, 02h, 03h, 0Ah, 04h, 05h, 06h, 0Bh, 07h, 08
+                            
+                   getsymbol:
+                   ; This routine gets the + or - from the user             
+                   
+01D9: C0 E0                 push acc                                ; push the 
+01DB: 12 01 36              lcall getchr                    ; <- gets symbol fr
+01DE: B4 2B 0C              cjne a, #02Bh, notadd   ; if the symbol is not +, j
+01E1: 12 01 40              lcall sndchr                    ; print +       
+01E4: 12 01 48              lcall crlf                              ; Call carr
+01E7: 12 01 FC              lcall addnums                   ; add the numbers
+01EA: D0 E0                 pop acc                                         ; p
+01EC: 22                    ret
+                            
+                            notadd:                                         ; j
+01ED: B4 2D E9              cjne a, #02Dh, getsymbol        ; if the symbol isn
+01F0: 12 01 40              lcall sndchr                    ; print -
+01F3: 12 01 48              lcall crlf                              ; Call carr
+01F6: 12 02 09              lcall subnums                   ; subtract the numb
+01F9: D0 E0                 pop acc                                         ; p
+01FB: 22                    ret     
+                            
+                   addnums:
+                   ; This routine adds the numbers in R1 and R2
+01FC: C0 E0                 push acc                                ; pushes th
+01FE: 89 E0                 mov acc, R1                             ; moves R1 
+0200: 2A                    add a, R2                               ; add R1 an
+0201: F5 90                 mov P1, a                               ; move the 
+0203: 12 01 AA              lcall dispnum                   ; display the resul
+0206: D0 E0                 pop acc                                         ; p
+0208: 22                    ret
+                   
+                   subnums:
+                   ; This routine subtracts the number in R2 from the number in
+0209: C0 E0                 push acc                                ; pushes th
+020B: 89 E0                 mov acc, R1                             ; moves R1 
+020D: 9A                    subb a, R2                              ; subtract 
+020E: F5 90                 mov P1, a                               ; move the 
+0210: 12 01 AA              lcall dispnum                   ; display the resul
+0213: D0 E0                 pop acc                                         ; p
+0215: 22                    ret     

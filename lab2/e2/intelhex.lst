@@ -1,0 +1,27 @@
+                   begin:
+0000: 74 00                 mov  a, #00h            ; 74 00 - clear acc
+0002: 85 E0 90              mov  P1, acc            ; 85 E0 90 - move acc into 
+0005: D2 92                 setb 0x92                       ; D2 92
+0007: 80 F7                 sjmp begin                      ; 80 F7
+0009: 50 61                 jnc  labtwo                     ; 50 61
+000B: 72 74                 orl      c, 0x74                ; 72 74
+000D: 79 20                 mov      R1, #20h               ; 79 20
+000F: 6F                    xrl  a, R7                      ; 6F
+                            
+0010: 6E                    xrl  a, R6                      ; 6E
+0011: 20 69 6E              jb   0x69, labthree     ; 20 69 6E
+0014: 20 36 2E              jb   0x36, labone       ; 20 36 2E
+0017: 31 31                 acall labfour           ; 31 31
+0019: 35 21                 addc a, 0x21            ; 35 21
+                   
+0045:              .org 0x45
+                   labone:
+                            
+006C:              .org 0x6C
+                   labtwo:
+                   
+0082:              .org 0x82
+                   labthree:
+                   
+0131:              .org 0x131
+                   labfour:         

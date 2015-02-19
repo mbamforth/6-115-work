@@ -1,0 +1,30 @@
+                            start:
+0000: 75 90 11              mov P1, #11h            ; light two of the lights, 
+0003: 79 00                 mov R1, #00h            ; set r1 to zero
+0005: 7A 00                 mov R2, #00h            ; set r2 to zero
+                   first:
+0007: D9 FE                 djnz R1, first          ; use this line and the nex
+0009: DA FC                 djnz R2, first          ;   the changes in the ligh
+                   
+000B: 75 90 22     mov P1, #22h                     ; move which two lights are
+000E: 79 00        mov R1, #00h                     ; reset r1 to zero
+0010: 7A 00        mov R2, #00h                     ; reset r2 to zero
+                   second:
+0012: D9 FE                 djnz R1, second                 ; use this line and
+0014: DA FC                 djnz R2, second                 ;   the changes in 
+                   
+0016: 75 90 44     mov P1, #44h                     ; move which two lights are
+0019: 79 00        mov R1, #00h                     ; reset r1 to zero
+001B: 7A 00        mov R2, #00h                     ; reset r2 to zero
+                   third:
+001D: D9 FE                 djnz R1, third          ; use this line and the nex
+001F: DA FC                 djnz R2, third          ;   the changes in the ligh
+                            
+0021: 75 90 88     mov P1, #88h                     ; move which two lights are
+0024: 79 00        mov R1, #00h                     ; reset r1 to zero
+0026: 7A 00        mov R2, #00h                     ; reset r2 to zero
+                   fourth:
+0028: D9 FE                 djnz R1, fourth                 ; use this line and
+002A: DA FC                 djnz R2, fourth                 ;   the changes in 
+                            
+002C: 02 00 00     ljmp start                               ; go back to the be

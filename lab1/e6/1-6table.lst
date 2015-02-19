@@ -1,0 +1,107 @@
+0000:                       .org 00h                                ; power up 
+0000: 02 01 00              ljmp start                      ; when the micro wa
+                                                                    ; the main 
+0100:              .org 100h                                ; and located at ad
+                   start: 
+0100: 12 01 0E              lcall init                      ; Start the serial 
+                            loop:                           ; Now, endlessly re
+0103: 12 01 41                      lcall getnibble         ; Gets the next nib
+0106: 12 01 32                      lcall crlf              ; Call carriage ret
+0109: 12 01 32                      lcall crlf              ; Call carriage ret
+010C: 80 F5                 sjmp loop
+                            
+                   init:
+                   ; set up serial port with a 11.0592 MHz crystal,
+                   ; use timer 1 for 9600 baud serial communications        
+010E: 75 89 20              mov tmod, #20h          ; set timer 1 for auto relo
+0111: 75 88 40              mov tcon, #40h          ; run timer 1
+0114: 75 8D FD              mov th1,  #0FDh                 ; set 9600 baud wit
+0117: 75 98 50              mov scon, #50h          ; set serial control reg fo
+                                                                    ; and mode 
+011A: D2 B4                 setb P3.4                       ; sets output enabl
+011C: 75 90 00              mov P1, #00h            ; Clear the LED bank
+011F: 22                    ret
+                            
+                   getchr:
+                   ; This routine "gets" or receives a character from the PC, t
+                   ; the serial port. RI is the same as SCON.0 - the assembler 
+                   ; either shorthand. The 7-bit ASCII code is returned in the 
+                   
+0120: 30 98 FD              jnb ri, getchr          ; wait till character recei
+0123: E5 99                 mov a, sbuf                     ; get character and
+0125: 54 7F                 anl a, #7fh                     ; mask off 8th bit
+0127: C2 98                 clr ri
+0129: 22                    ret
+                            
+                   sndchr:
+                   ; This routine "sends" or transmits a character to the PC, u
+                   ; port. The character to be sent is stored in the accumulato
+                   ; TI are the same as far as the assembler is concerned.
+                   
+012A: C2 99                 clr scon.1                      ; clear the ti comp
+012C: F5 99                 mov sbuf, a                     ; move a character 
+                   txloop:
+012E: 30 99 FD              jnb scon.1, txloop      ; wait till chr is sent
+0131: 22                    ret
+                            
+                   crlf:
+                   ; This routine sends a linefeed and a carriage return when c
+                   
+0132: C0 E0                 push acc                        ; push the old accu
+0134: 74 0A                 mov a, #0Ah                     ; Move linefeed cha
+0136: 12 01 2A              lcall sndchr            ; Send linefeed character
+0139: 74 0D                 mov a, #0Dh                     ; Move carriage ret
+013B: 12 01 2A              lcall sndchr            ; Send carriage return char
+013E: D0 E0                 pop acc                                 ; pop the o
+0140: 22                    ret
+                   
+                   getnibble:
+                   ; This function gets a nibble from the keypad
+                   
+0141: C0 E0                 push acc                        ; push the old accu
+                            ;mov acc, P1                    ; puts P1 in read m
+0143: 75 90 FF              mov P1, #0FFh
+0146: C2 B4                 clr P3.4                        ; lower output enab
+                            checkdata:
+0148: 85 90 E0                      mov acc, P1             ; move in values
+014B: 53 E0 80                      anl acc, #80h   ; mask all but data availab
+014E: B4 80 F7                      cjne a, #80h, checkdata         ; loop if d
+0151: 85 90 E0              mov acc, P1                     ; since data is ava
+0154: D2 B4                 setb P3.4                       ; sets output enabl
+0156: 85 E0 90              mov P1, acc                     ; displays the whol
+0159: 53 E0 0F              anl acc, #0Fh           ; mask all but the 4 data b
+015C: 12 01 83              lcall keytab            ; uses the table to convert
+015F: 24 30                 add a, #30h                     ; add value to the 
+0161: 12 01 2A              lcall sndchr            ; Send carriage return char
+                            
+0164: D0 E0                 pop acc                                 ; pop the o
+0166: 22                    ret
+                            
+                   dispnum:
+                   ; This routine displays the result of the calculation on the
+0167: 75 F0 64              mov b, #64h                             ; put 100 i
+016A: 84                    div ab                                  ; the resul
+016B: 24 30                 add a, #30h                             ; mask the 
+016D: 12 01 2A              lcall sndchr                    ; send the first nu
+0170: E5 F0                 mov a, b                                ; move the 
+0172: 75 F0 0A              mov b, #0Ah                             ; move 10 i
+0175: 84                    div ab
+0176: 24 30                 add a, #30h                             ; mask the 
+0178: 12 01 2A              lcall sndchr                    ; send the second n
+017B: E5 F0                 mov a, b                                ; move the 
+017D: 24 30                 add a, #30h                             ; mask the 
+017F: 12 01 2A              lcall sndchr                    ; send the third nu
+0182: 22                    ret
+                   
+                   keytab:
+                   ; This subroutine takes the nibble from the keypad and conve
+                   
+0183: 04                    inc a
+0184: 83                    movc a, @a+pc
+0185: 22                    ret
+0186: 01 02 03 0A 
+      04 05 06 0B 
+                            .db 01h, 02h, 03h, 0Ah, 04h, 05h, 06h, 0Bh
+018E: 07 08 09 0C 
+      0E 00 0F 0D 
+                            .db 07h, 08h, 09h, 0Ch, 0Eh, 00h, 0Fh, 0Dh

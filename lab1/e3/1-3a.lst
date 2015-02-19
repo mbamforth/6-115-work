@@ -1,0 +1,59 @@
+0000:                       .org 00h                                ; power up 
+0000: 02 01 00              ljmp start                      ; when the micro wa
+                                                                    ; the main 
+0100:              .org 100h                                ; and located at ad
+                   start: 
+0100: 12 01 10              lcall init                      ; Start the serial 
+                            loop:                           ; Now, endlessly re
+0103: 12 01 20                      lcall getchr    ; <- gets a character from 
+0106: F5 90                         mov P1, a               ; move most recent 
+0108: 12 01 32                      lcall crlf              ; call carriage ret
+010B: 12 01 2A                      lcall sndchr    ; -> and then echoes the ch
+010E: 80 F3                 sjmp loop
+                            
+                   init:
+                   ; set up serial port with a 11.0592 MHz crystal,
+                   ; use timer 1 for 9600 baud serial communications
+0110: 75 89 20              mov tmod, #20h          ; set timer 1 for auto relo
+0113: 75 88 40              mov tcon, #40h          ; run timer 1
+0116: 75 8D FD              mov th1,  #0FDh                 ; set 9600 baud wit
+0119: 75 98 50              mov scon, #50h          ; set serial control reg fo
+                                                                    ; and mode 
+011C: 75 F0 41              mov b, #41h                     ; put 65 decimal in
+011F: 22                    ret
+                            
+                   getchr:
+                   ; This routine "gets" or receives a character from the PC, t
+                   ; the serial port. RI is the same as SCON.0 - the assembler 
+                   ; either shorthand. The 7-bit ASCII code is returned in the 
+                   
+0120: 30 98 FD              jnb ri, getchr          ; wait till character recei
+0123: E5 99                 mov a, sbuf                     ; get character and
+0125: 54 7F                 anl a, #7fh                     ; mask off 8th bit
+0127: C2 98                 clr ri
+0129: 22                    ret
+                            
+                   sndchr:
+                   ; This routine "sends" or transmits a character to the PC, u
+                   ; port. The character to be sent is stored in the accumulato
+                   ; TI are the same as far as the assembler is concerned.
+                   
+012A: C2 99                 clr scon.1                      ; clear the ti comp
+012C: F5 99                 mov sbuf, a                     ; move a character 
+                   txloop:
+012E: 30 99 FD              jnb scon.1, txloop      ; wait till chr is sent
+0131: 22                    ret
+                            
+                   crlf:
+                   ; This routine counts the number of characters so that line 
+                   ; carriage returns can be implemented.
+                   
+0132: D5 F0 0D              djnz b, jumphere        ; If b != 0, jump forward, 
+0135: 74 0A                 mov a, #0Ah                     ; Move linefeed cha
+0137: 12 01 2A              lcall sndchr            ; Send linefeed character
+013A: 74 0D                 mov a, #0Dh                     ; Move carriage ret
+013C: 12 01 2A              lcall sndchr            ; Send carriage return char
+013F: 75 F0 41              mov b, #41h                     ; Reset register b 
+                            
+                   jumphere:        
+0142: 22                    ret

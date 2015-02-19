@@ -1,0 +1,96 @@
+8000:              .org 8000h                               ; power up and rese
+                   start: 
+8000: 12 80 10              lcall init                      ; Set up the regist
+8003: 12 80 29              lcall addnums           ; Add the numbers
+8006: 12 80 40              lcall subnums           ; Subtract the numbers
+8009: 12 80 57              lcall mulnums           ; Multiple the numbers
+800C: 12 80 78              lcall divnums           ; Divide the numbers
+800F: 22                    ret
+                            
+                   init:
+                   ; Pull values from memory and clear LED bank for debugging
+8010: C0 82                 push dpl                                ; push data
+8012: C0 83                 push dph                                ; push data
+8014: 75 90 00              mov P1, #00h                    ; Clear the LED ban
+8017: 75 82 00              mov dpl, #00h                   ; put lsb in dptr
+801A: 75 83 90              mov dph, #90h                   ; put msb in dptr
+801D: E0                    movx a, @dptr                   ; gets first number
+801E: A9 E0                 mov R1, acc                             ; puts firs
+8020: A3                    inc dptr                                ; increment
+8021: E0                    movx a, @dptr                   ; gets second numbe
+8022: AA E0                 mov R2, acc                             ; puts seco
+8024: D0 83                 pop dph                                         ; p
+8026: D0 82                 pop dpl                                         ; p
+8028: 22                    ret
+                            
+                   addnums:
+                   ; This routine adds the numbers in R1 and R2
+8029: C0 E0                 push acc                                ; pushes th
+802B: C0 82                 push dpl                                ; push data
+802D: C0 83                 push dph                                ; push data
+802F: 89 E0                 mov acc, R1                             ; moves R1 
+8031: 2A                    add a, R2                               ; add R1 an
+8032: 75 82 02              mov dpl, #02h                   ; push lsb into dat
+8035: 75 83 90              mov dph, #90h                   ; push msb into dat
+8038: F0                    movx @dptr, a                   ; move the sum into
+8039: D0 83                 pop dph                                         ; p
+803B: D0 82                 pop dpl                                         ; p
+803D: D0 E0                 pop acc                                         ; p
+803F: 22                    ret
+                   
+                   subnums:
+                   ; This routine subtracts the number in R2 from the number in
+8040: C0 E0                 push acc                                ; pushes th
+8042: C0 82                 push dpl                                ; push data
+8044: C0 83                 push dph                                ; push data
+8046: 89 E0                 mov acc, R1                             ; moves R1 
+8048: 9A                    subb a, R2                              ; subtract 
+8049: 75 82 03              mov dpl, #03h                   ; push lsb into dat
+804C: 75 83 90              mov dph, #90h                   ; push msb into dat
+804F: F0                    movx @dptr, a                   ; move the result i
+8050: D0 83                 pop dph                                         ; p
+8052: D0 82                 pop dpl                                         ; p
+8054: D0 E0                 pop acc                                         ; p
+8056: 22                    ret     
+                            
+                   mulnums:
+                   ; This routine multiplies the numbers in R1 and R2
+8057: C0 E0                 push acc                                ; push acc
+8059: C0 F0                 push b                                  ; push b be
+805B: C0 82                 push dpl                                ; push data
+805D: C0 83                 push dph                                ; push data
+805F: 89 E0                 mov acc, R1                             ; move R1 i
+8061: 8A F0                 mov b, R2                               ; move R2 i
+8063: A4                    mul ab                                  ; multiply 
+8064: 75 82 04              mov dpl, #04h                   ; push lsb into dat
+8067: 75 83 90              mov dph, #90h                   ; push msb into dat
+806A: F0                    movx @dptr, a                   ; move the result i
+806B: A3                    inc dptr                                ; increment
+806C: E5 F0                 mov a, b                                ; move b in
+806E: F0                    movx @dptr, a                   ; move the result i
+806F: D0 83                 pop dph                                         ; p
+8071: D0 82                 pop dpl                                         ; p
+8073: D0 F0                 pop b                                   ; pop b
+8075: D0 E0                 pop acc                                         ; p
+8077: 22                    ret
+                   
+                   divnums:
+                   ; This routine divides the numbers in R1 and R2
+8078: C0 E0                 push acc                                ; push acc
+807A: C0 F0                 push b                                  ; push b be
+807C: C0 82                 push dpl                                ; push data
+807E: C0 83                 push dph                                ; push data
+8080: 89 E0                 mov acc, R1                             ; move R1 i
+8082: 8A F0                 mov b, R2                               ; move R2 i
+8084: 84                    div ab                                  ; divide R1
+8085: 75 82 06              mov dpl, #06h                   ; push lsb into dat
+8088: 75 83 90              mov dph, #90h                   ; push msb into dat
+808B: F0                    movx @dptr, a                   ; move the result i
+808C: A3                    inc dptr                                ; increment
+808D: E5 F0                 mov a, b                                ; move b in
+808F: F0                    movx @dptr, a                   ; move the result i
+8090: D0 83                 pop dph                                         ; p
+8092: D0 82                 pop dpl                                         ; p
+8094: D0 F0                 pop b                                   ; pop b
+8096: D0 E0                 pop acc                                         ; p
+8098: 22                    ret     
